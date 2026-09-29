@@ -143,3 +143,24 @@ vite.config.ts.timestamp-*
 .vite/
 
 folder_structure.txt
+
+backend/.env
+
+backend/static/uploads/*
+!backend/static/uploads/.gitkeep
+
+*.db
+*.sqlite
+*.sqlite3
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Flask instance folder & Databases
+instance/
+*.db
+*.sqlite
+
+# Migrations (Optional: some teams track migrations, some don't. Flask-Migrate usually recommends tracking migrations/versions, but not the cache inside it).
+migrations/__pycache__/
