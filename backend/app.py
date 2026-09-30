@@ -1,8 +1,9 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request,Blueprint
 from flask_cors import CORS
 from datetime import datetime, timezone
 from extensions import db,login_manager,migrate
 from config import Config
+from routes.auth import auth_bp
 
 
 app = Flask(__name__)
@@ -20,7 +21,10 @@ CORS(
 
 from models import models
 
+app.register_blueprint(auth_bp)
+
+
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5020)
+    app.run(debug=True, port=5000)
