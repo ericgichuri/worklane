@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link,useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function Login() {
 	const [loading, setLoading] = useState(false);
@@ -14,6 +15,9 @@ function Login() {
 		password: false
 	});
 
+	const navigate=useNavigate();
+	const { login } = useAuth();
+
 	const handleChange = (event) => {
 		const { name, value } = event.target;
 		setFormData({
@@ -26,7 +30,7 @@ function Login() {
 		}
 	};
 
-	const handleSubmit = (event) => {
+	const handleSubmit = async (event) => {
 		event.preventDefault();
 		const newError = {};
 		if (formData.email.trim().length === 0) {
@@ -47,10 +51,19 @@ function Login() {
 		setError("");
 
 		try {
-			// Simulate login action
-			setSuccess('Login Successful');
-		} catch (error) {
-			setError(error.message);
+			// Call login from AuthContext which hits /api/auth/login
+			const data = await login(formData.email, formData.password);
+
+			if (data.success) {
+				setSuccess('Login Successful! Redirecting...');
+				setTimeout(() => {
+					navigate('/dashboard', { replace: true });
+				}, 1000); // 1 second delay to display the success message
+			} else {
+				setError(data.message || 'Invalid email or password');
+			}
+		} catch (err) {
+			setError('Network error. Could not connect to the backend.');
 		} finally {
 			setLoading(false);
 		}

@@ -1,11 +1,17 @@
 import { useState ,useEffect} from 'react';
-import { Link,useNavigate } from 'react-router-dom';
+import { Link,useNavigate,useParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function ResetPassword() {
+	const { token } = useParams()
+	const navigate = useNavigate()
+	const { isAuthenticated } = useAuth();
+	const [isLegit,setIsLegit] = useState(false)
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
 	const [success, setSuccess] = useState('');
 	const [formData, setFormData] = useState({
+		token:"",
 		password: "",
 		confirmPassword: ""
 	});
@@ -13,6 +19,39 @@ function ResetPassword() {
 		password: false,
 		confirmPassword: false
 	});
+	// check if logged in
+	useEffect(() => {
+		if (isAuthenticated) {
+			navigate('/dashboard', { replace: true });
+		}
+	}, [isAuthenticated, navigate]);
+
+	// check the reset token if not redirect
+	useEffect(() => {
+		const fetchToken = async () => {
+			setLoading(true);
+			try {
+				const response = await fetch(`/api/auth/reset-password/${token}`);
+				const results = await response.json();
+				if (!response.ok || !results.success) {
+					throw new Error(results.message || 'Request failed');
+				}
+				if (results.success) {
+					setFormData(prev => ({ ...prev, token: results.data['token'] }));
+					setIsLegit(true);
+				} else {
+					setError(results.message);
+				}
+			} catch (err) {
+				setError(err.message);
+			} finally {
+				setLoading(false);
+			}
+		};
+		if (token) {
+			fetchToken();
+		}
+	}, [token]);
 
 	const handleChange = (event) => {
 		const { name, value } = event.target;
@@ -26,7 +65,7 @@ function ResetPassword() {
 		}
 	};
 
-	const handleSubmit = (event) => {
+	const handleSubmit = async(event) => {
 		event.preventDefault();
 		const newError = {};
 		if (formData.password.trim().length === 0) {
@@ -47,8 +86,33 @@ function ResetPassword() {
 		setError("");
 
 		try {
-			// Simulate login action
-			setSuccess('Password reset Successful');
+			const response = await fetch('/api/auth/reset-password',{
+				method:"POST",
+				headers:{
+					'Content-Type':'application/json'
+				},
+				body:JSON.stringify(formData),
+				credentials: 'include'
+			});
+			const results=await response.json()
+			if(!response.ok || !results.success){
+				throw new Error(results.message || "request failed")
+			}
+			if(results.success){
+				setSuccess(results.message)
+				setTimeout(() => {
+					navigate('/login', { replace: true });
+				}, 1000);
+				setFormData({
+					token:"",
+					password: "",
+					confirmPassword: ""
+				})
+				setFormError({
+					password:false,
+					confirmPassword:false
+				})
+			}
 		} catch (error) {
 			setError(error.message);
 		} finally {
@@ -80,63 +144,73 @@ function ResetPassword() {
 					</div>
 				)}
 
-				<form onSubmit={handleSubmit} className="space-y-4">
-					<div className="space-y-1.5">
-						<label className="block text-sm font-semibold text-primary">Password</label>
-						<input 
-							type="password" 
-							name="password" 
-							value={formData.password} 
-							onChange={handleChange}
-							placeholder="new password" 
-							className={`w-full px-4 py-2.5 text-sm rounded-xl text-primary bg-background border transition-all outline-none focus:ring-2 ${
-								formError.password 
-									? 'border-red-500 focus:ring-red-200 placeholder-red-400' 
-									: 'border-primary/20 focus:border-accent focus:ring-accent/20 placeholder-gray-400'
-							}`} 
-						/>
-						{formError.password && <p className="text-xs text-red-500">Password is required</p>}
-					</div>
+				{isLegit ? (
 
-					<div className="space-y-1.5">
-						<div className="flex justify-between items-center">
-							<label className="block text-sm font-semibold text-primary">Confirm Password</label>
-							<Link 
-								to="/forgot-password" 
-								className="text-xs text-accent hover:underline font-medium"
-							>
-								Resend Link?
-							</Link>
+					<form onSubmit={handleSubmit} className="space-y-4">
+						<input type="hidden" name="token" value={formData.token} onChange={handleChange} />
+						<div className="space-y-1.5">
+							<label className="block text-sm font-semibold text-primary">Password</label>
+							<input 
+								type="password" 
+								name="password" 
+								value={formData.password} 
+								onChange={handleChange}
+								placeholder="new password" 
+								className={`w-full px-4 py-2.5 text-sm rounded-xl text-primary bg-background border transition-all outline-none focus:ring-2 ${
+									formError.password 
+										? 'border-red-500 focus:ring-red-200 placeholder-red-400' 
+										: 'border-primary/20 focus:border-accent focus:ring-accent/20 placeholder-gray-400'
+								}`} 
+							/>
+							{formError.password && <p className="text-xs text-red-500">Password is required</p>}
 						</div>
-						<input 
-							type="password" 
-							name="confirmPassword" 
-							value={formData.confirmPassword}
-							onChange={handleChange} 
-							placeholder="retype password"
-							className={`w-full px-4 py-2.5 text-sm rounded-xl text-primary bg-background border transition-all outline-none focus:ring-2 ${
-								formError.password 
-									? 'border-red-500 focus:ring-red-200 placeholder-red-400' 
-									: 'border-primary/20 focus:border-accent focus:ring-accent/20 placeholder-gray-400'
-							}`} 
-						/>
-						{formError.confirmPassword && <p className="text-xs text-red-500">confirm Password is required</p>}
-					</div>
 
-					<button 
-						type="submit"
-						disabled={loading}
-						className="w-full mt-2 bg-accent text-background font-semibold py-3 px-4 rounded-xl shadow-lg hover:opacity-95 transition-all cursor-pointer text-sm disabled:opacity-50"
-					>
-						{loading ? 'Resetting password...' : 'Save'}
-					</button>
-				</form>
+						<div className="space-y-1.5">
+							<div className="flex justify-between items-center">
+								<label className="block text-sm font-semibold text-primary">Confirm Password</label>
+								<Link 
+									to="/forgot-password" 
+									className="text-xs text-accent hover:underline font-medium"
+								>
+									Resend Link?
+								</Link>
+							</div>
+							<input 
+								type="password" 
+								name="confirmPassword" 
+								value={formData.confirmPassword}
+								onChange={handleChange} 
+								placeholder="retype password"
+								className={`w-full px-4 py-2.5 text-sm rounded-xl text-primary bg-background border transition-all outline-none focus:ring-2 ${
+									formError.confirmPassword 
+										? 'border-red-500 focus:ring-red-200 placeholder-red-400' 
+										: 'border-primary/20 focus:border-accent focus:ring-accent/20 placeholder-gray-400'
+								}`} 
+							/>
+							{formError.confirmPassword && <p className="text-xs text-red-500">confirm Password is required</p>}
+						</div>
+
+						<button 
+							type="submit"
+							disabled={loading}
+							className="w-full mt-2 bg-accent text-background font-semibold py-3 px-4 rounded-xl shadow-lg hover:opacity-95 transition-all cursor-pointer text-sm disabled:opacity-50"
+						>
+							{loading ? 'Resetting password...' : 'Save'}
+						</button>
+					</form>
+				) : (
+					<p className="text-sm text-primary/70">
+						<Link to="/forgot-password" className="text-accent font-semibold hover:underline">
+							Resend link again
+						</Link>
+					</p>
+				)}
 
 				<div className="text-center pt-2 border-t border-primary/5">
 					<p className="text-sm text-primary/70">
 						Go Back to{' '}
-						<Link to="/demo" className="text-accent font-semibold hover:underline">
-							 login
+						<Link to="/login" className="text-accent font-semibold hover:underline">
+							login
 						</Link>
 					</p>
 				</div>

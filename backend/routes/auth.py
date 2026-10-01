@@ -6,7 +6,7 @@ from sqlalchemy import or_
 from models.models import Role,User
 from extensions import db
 
-auth_bp = Blueprint('auth',__name__,url_prefix='/auth')
+auth_bp = Blueprint('auth',__name__,url_prefix='/api/auth')
 
 @auth_bp.route("/setup", methods=["POST"])
 def setup():
@@ -60,6 +60,15 @@ def setup():
         db.session.rollback()
         return api_response(success=False, message=str(e), status_code=500)
 
+from flask_login import current_user, login_required
+
+@auth_bp.route("/status", methods=["GET"])
+def auth_status():
+    if current_user.is_authenticated:
+        return api_response(success=True, message="User is authenticated", data={"isAuthenticated": True}, status_code=200)
+    else:
+        return api_response(success=True, message="User is not authenticated", data={"isAuthenticated": False}, status_code=200)
+
 @auth_bp.route("/login", methods=["POST"])
 def login():
     try:
@@ -88,6 +97,7 @@ def check_setup():
             destination_url = '/setup'
             return api_response(success=False,message="system setup not found",data={"url":destination_url},status_code=401)
     except Exception as e:
+        print(e)
         return api_response(success=False,message=str(e),status_code=500)
 
 @auth_bp.route("/recover-password", methods=["POST"])
@@ -138,10 +148,10 @@ def recover_password():
 def reset_password():
     try:
         data = request.get_json()
-        if not data or not data.get('token') or not data.get('password') or not data.get('confirm_password'):
+        if not data or not data.get('token') or not data.get('password') or not data.get('confirmPassword'):
             return api_response(success=False, message="Missing fields required", status_code=400)
         
-        if data.get('password') != data.get('confirm_password'):
+        if data.get('password') != data.get('confirmPassword'):
             return api_response(success=False, message="Passwords do not match", status_code=400)
         
         user = User.verify_reset_token(data.get('token'))

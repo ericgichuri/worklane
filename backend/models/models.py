@@ -7,7 +7,7 @@ import enum
 import secrets
 
 
-db = SQLAlchemy()
+from extensions import db
 
 class PriorityLevel(enum.Enum):
     """Defines the priority level of a request or task."""

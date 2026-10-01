@@ -19,7 +19,7 @@ function Footer() {
 
 		        <div className="flex justify-center space-x-6 text-sm font-medium">
 		          	<Link to="/" className="hover:text-accent transition-colors">Home</Link>
-		          	<Link to="/login" className="hover:text-accent transition-colors">Sign In</Link>
+		          	<Link to="/contact" className="hover:text-accent transition-colors">Contact</Link>
 		          	<Link to="/demo" className="hover:text-accent transition-colors">Demo</Link>
 		        </div>
 

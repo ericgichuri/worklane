@@ -1,6 +1,6 @@
 from flask import jsonify
 
-def api_response(success:bool, message: str, data: None, status_code: int=200):
+def api_response(success:bool, message: str, data= None, status_code: int=200):
 	if data is None:
 		data={}
 

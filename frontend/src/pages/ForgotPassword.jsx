@@ -1,7 +1,10 @@
-import {useState} from 'react'; 
+import {useState,useEffect} from 'react'; 
 import {Link,useNavigate} from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
 function ForgotPassword() {
 	const navigate=useNavigate()
+	const { isAuthenticated } = useAuth();
 	const [loading,setLoading] = useState(false)
 	const [error,setError] = useState('')
 	const [success,setSuccess] = useState('')
@@ -11,6 +14,12 @@ function ForgotPassword() {
 	const [formError,setFormError] = useState({
 		email:false
 	})
+	useEffect(() => {
+		if (isAuthenticated) {
+			navigate('/dashboard', { replace: true });
+		}
+	}, [isAuthenticated, navigate]);
+
 	const handleChange=(event)=>{
 		const {name,value} = event.target
 		setFormData({
@@ -24,7 +33,7 @@ function ForgotPassword() {
 		}
 	}
 
-	const handleSubmit=(event)=>{
+	const handleSubmit=async(event)=>{
 		event.preventDefault()
 		const newError={}
 		if(formData.email.trim().length===0){
@@ -40,7 +49,29 @@ function ForgotPassword() {
 		setError("")
 		setSuccess("")
 		try{
-			setSuccess("reset successful check you email")
+			const response = await fetch('/api/auth/recover-password',{
+				method:"POST",
+				headers:{
+					'Content-Type':'application/json'
+				},
+				body:JSON.stringify(formData),
+				credentials: 'include'
+			});
+			const results = await response.json()
+			if(!response.ok || !results.success){
+				throw new Error(results.message || "request failed")
+			}
+			if (results.success) {
+				setSuccess(results.message);
+				setFormData({
+					email: ''
+				});
+				setFormError({
+					email: false
+				});
+			} else {
+				setError(results.message);
+			}
 		}catch(error){
 			setError(error.message)
 		}finally{

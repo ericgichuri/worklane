@@ -1,5 +1,6 @@
 import {useState,useEffect} from 'react'
 import {Link,useNavigate} from 'react-router-dom'
+import { useAuth } from '../context/AuthContext';
 
 function Setup() {
 	const [loading, setLoading] = useState(false)
@@ -19,6 +20,8 @@ function Setup() {
 		password: false
 	})
 	const navigate=useNavigate()
+	const { completeSetup } = useAuth();
+	
 	const handleChange=(event)=>{
 		const {name,value} = event.target;
 		setFormData({
@@ -29,40 +32,50 @@ function Setup() {
 			setFormError({...formError, [name]:false})
 		}
 	}
-	const handleSubmit=(event)=>{
-		event.preventDefault()
-		const newError = {};
-		if (formData.name.trim().length === 0) {
-			newError.name = true;
-		}
-		if (formData.phone.trim().length === 0) {
-			newError.phone = true;
-		}
-		if (formData.email.trim().length === 0) {
-			newError.email = true;
-		}
-		if (formData.password.trim().length === 0) {
-			newError.password = true;
-		}
-		setFormError(newError);
+	const handleSubmit = async (event) => {
+        event.preventDefault();
+        const newError = {};
+        if (formData.name.trim().length === 0) newError.name = true;
+        if (formData.phone.trim().length === 0) newError.phone = true;
+        if (formData.email.trim().length === 0) newError.email = true;
+        if (formData.password.trim().length === 0) newError.password = true;
+        
+        setFormError(newError);
 
-		if (Object.keys(newError).length > 0) {
-			return;
-		}
-		
-		setLoading(true);
-		setSuccess("");
-		setError("");
+        if (Object.keys(newError).length > 0) {
+            return;
+        }
+        
+        setLoading(true);
+        setSuccess('');
+        setError('');
 
-		try {
-			// Simulate login action
-			setSuccess('Login Successful');
-		} catch (error) {
-			setError(error.message);
-		} finally {
-			setLoading(false);
-		}
-	}
+        try {
+            const response = await fetch('/api/auth/setup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                setSuccess('Setup complete! Redirecting to login...');
+                completeSetup(); // Updates the app state so it knows setup is done
+                
+                setTimeout(() => {
+                    navigate('/login', { replace: true });
+                }, 1500); // 1.5 second delay so the user reads the success message
+            } else {
+                setError(data.message || 'Failed to complete setup.');
+            }
+        } catch (err) {
+            setError('Network error. Could not connect to the backend.');
+        } finally {
+            setLoading(false);
+        }
+    };
 	return (
 		<div className="min-h-full bg-background py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center">
 			<div className="max-w-md w-full bg-white shadow-xl rounded-2xl border border-primary/10 p-8 space-y-6">

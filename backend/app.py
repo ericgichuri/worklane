@@ -3,8 +3,6 @@ from flask_cors import CORS
 from datetime import datetime, timezone
 from extensions import db,login_manager,migrate
 from config import Config
-from routes.auth import auth_bp
-
 
 app = Flask(__name__)
 
@@ -19,11 +17,14 @@ CORS(
     origins=["http://localhost:5173"]
 )
 
-from models import models
+from models.models import *
+from routes.auth import auth_bp
 
 app.register_blueprint(auth_bp)
 
-
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 if __name__ == "__main__":
