@@ -19,8 +19,10 @@ CORS(
 
 from models.models import *
 from routes.auth import auth_bp
+from routes.users import users_bp
 
 app.register_blueprint(auth_bp)
+app.register_blueprint(users_bp)
 
 @login_manager.user_loader
 def load_user(user_id):
