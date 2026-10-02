@@ -10,6 +10,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Footer from './components/Footer';
 import Sidebar from './components/Sidebar';
+import Users from './pages/Users';
 
 function App() {
     const { isSetup, isAuthenticated, isLoading } = useAuth();
@@ -52,8 +53,8 @@ function App() {
                 {showSidebar && <Sidebar />}
 
                 {/* Right-side container for Routes and Footer */}
-                <div className="flex-1 flex flex-col overflow-y-auto">
-                    <main className="flex-1">
+                <div className="flex-1 flex flex-col overflow-y-hidden">
+                    <main className="flex-1 overflow-y-hidden">
                         <Routes>
                             <Route path="/" element={<Home />} />
                             <Route 
@@ -68,6 +69,7 @@ function App() {
                                 path="/dashboard" 
                                 element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />} 
                             />
+                            <Route path="/users" element={isAuthenticated ? <Users /> : <Navigate to="/login" replace />} />
 
                             {/* Note: Remember to add Route elements here for your requests, tasks, customers, etc., as you build them out */}
 

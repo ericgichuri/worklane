@@ -19,6 +19,7 @@ def list():
 		data=[{
 			"id":u.id,
 			"user_token":u.user_token,
+			"name":u.name,
 			"email":u.email,
 			"phone":u.phone,
 			"role_id":u.role_id,
@@ -139,6 +140,7 @@ def list_roles():
 def upsert_roles():
 	try:
 		data=request.get_json()
+		print(data)
 		if not data:
 			return api_response(success=False,message="No data provided",status_code=400)
 		role_id=data.get('role_id')
@@ -161,7 +163,7 @@ def upsert_roles():
 		else:
 			if not name or not description:
 				return api_response(success=False,message="Missing fields required",status_code=400)
-			if not name.strip() or description.strip():
+			if not name.strip() or not description.strip():
 				return api_response(success=False,message="Fields cannot be empty",status_code=400)
 			# check exissting 
 			exist_role=Role.query.filter_by(name=name.strip()).first()
